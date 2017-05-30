@@ -8,5 +8,3 @@ dst = distance.euclidean(a,b)
 
 
 print(dst)
-
-print(dst)
