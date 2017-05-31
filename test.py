@@ -2,9 +2,20 @@ from scipy.spatial import distance
 import numpy
 
 
-a = (1,2,3)
-b = (4,5,6)
-dst = distance.euclidean(a,b)
+def steuern(einkommen):
+    """BLABLABLA TESTFUNKTION"""
+    if einkommen <= 50:
+        steuer = 0
+    elif einkommen == 51:
+        steuer = 1
+    else:
+        steuer = 2 * (einkommen-51)
+
+    while steuer <= 10:
+            steuer += 1
+
+    return steuer
 
 
-print(dst)
+
+print(steuern(input("Steuern: ")))
