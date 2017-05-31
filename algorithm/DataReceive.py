@@ -1,4 +1,4 @@
-import numpy as np
+import numpy
 
 from scipy.io import arff
 from scipy.spatial import distance
