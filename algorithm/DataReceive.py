@@ -15,3 +15,8 @@ def __load_file(path):
     print("load " + path)
 
     return data[meta.names()[:-1]].view(numpy.float).reshape(data.shape + (-1,))
+
+def test_on_data_set(clusterfunction, path):
+
+    clusterfunction(__load_file(path))
+
