@@ -2,6 +2,8 @@ from scipy.spatial import distance
 import numpy
 
 
+'''
+
 def steuern(einkommen):
     """BLABLABLA TESTFUNKTION"""
     if einkommen <= 50:
@@ -19,3 +21,26 @@ def steuern(einkommen):
 
 
 print(steuern(input("Steuern: ")))
+'''
+def find_indices(lst, condition):
+    return [i for i, elem in enumerate(lst) if condition(elem)]
+
+a = numpy.array([1,2,3],[4,5,6],[7,8,9])
+a.sort()
+print (a)
+a = a[::-1]
+print(a)
+
+b = []
+b.append(1)
+b.append(2)
+b.append(3)
+b[2] = 5
+print(b)
+
+c = find_indices(b, lambda e: e > 4)
+print c
+
+adjacent = numpy.zeros([2,2], float)
+print adjacent[1][1]
+
