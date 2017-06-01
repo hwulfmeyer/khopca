@@ -4,7 +4,7 @@ from scipy.io import arff
 from scipy.spatial import distance
 
 
-def __load_file(path):
+def load_data(path):
     """
     Load a data set from path. Data set must be arff format.
 

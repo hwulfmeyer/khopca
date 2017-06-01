@@ -21,11 +21,11 @@ def steuern(einkommen):
 
 
 print(steuern(input("Steuern: ")))
-'''
+
 def find_indices(lst, condition):
     return [i for i, elem in enumerate(lst) if condition(elem)]
 
-a = numpy.array([1,2,3],[4,5,6],[7,8,9])
+a = numpy.array([[1, 2, 3], [4, 5, 6], [7, 8, 9]])
 a.sort()
 print (a)
 a = a[::-1]
@@ -44,3 +44,14 @@ print c
 adjacent = numpy.zeros([2,2], float)
 print adjacent[1][1]
 
+'''
+
+x = numpy.array([[[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]], [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]])
+
+print x
+
+print x.shape
+
+y = numpy.zeros((10,), dtype=numpy.int)
+
+print y.shape[0]
