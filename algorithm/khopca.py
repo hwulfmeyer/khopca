@@ -1,15 +1,18 @@
 import helper
 
-def clusterData():
-    pass
-    # 1. load data
-    # 2. create adjacency
-    # 3. create value "array" for data
-    # 4. apply all rules to data until nothing changes
-    # 5. outpust cluster
+
+def clustering(data, kmin, kmax):
+    if kmin >= kmax:
+        print "Error: MIN must be smaller than MAX"
+    else:
+        # 2. create adjacency
+        # 3. create value "array" for data
+        # 4. apply all rules to data until nothing changes
+        # 5. outpust cluster
+    return kmin
 
 
-def applyRulesToData(adjmatrix, dataArray):
+def applyrulestodata(adjmatrix, dataArray):
     x = dataArray.shape[0]
     for i in range(0,x,1):
         dataArray[i] = rule1(i, adjmatrix, dataArray)

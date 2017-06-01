@@ -17,10 +17,6 @@ def __load_file(path):
     return data[meta.names()[:-1]].view(numpy.float).reshape(data.shape + (-1,))
 
 
-def test_on_data_set(clusterfunction, path):
-    clusterfunction(__load_file(path))
-
-
 def find_indices(lst, condition):
     return [i for i, elem in enumerate(lst) if condition(elem)]
 
