@@ -11,6 +11,6 @@ def clustering_test(datapath, kmin, kmax):
 
 if __name__ == "__main__":
     print "clustering start"
-    clustering_test("mydir/myfile.arff", 0, 7)
+    clustering_test("../iris_training.arff", 0, 7)
     print "clustering end"
 
