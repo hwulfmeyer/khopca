@@ -16,9 +16,10 @@ def __load_file(path):
 
     return data[meta.names()[:-1]].view(numpy.float).reshape(data.shape + (-1,))
 
-def test_on_data_set(clusterfunction, path):
 
+def test_on_data_set(clusterfunction, path):
     clusterfunction(__load_file(path))
+
 
 def find_indices(lst, condition):
     return [i for i, elem in enumerate(lst) if condition(elem)]
@@ -65,6 +66,9 @@ def create_Adjacent(data, k):
             adjacent[i][row] = 1
 
     return adjacent
+
+
+
 
 
 
