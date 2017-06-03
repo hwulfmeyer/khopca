@@ -12,8 +12,6 @@ def load_data(path):
     :return: a numpy-matrix. each column represents an attribute; each row a data item
     """
     data, meta = arff.loadarff(open(path, 'r'))
-    print("load " + path)
-
     return data[meta.names()[:-1]].view(numpy.float).reshape(data.shape + (-1,))
 
 

@@ -46,11 +46,11 @@ print adjacent[1][1]
 
 '''
 
-x = numpy.array([[[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]], [[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]]])
+x = numpy.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
 
 print x
 
-print x.shape
+print x[3][1]
 
 y = numpy.zeros((10,), dtype=numpy.int)
 

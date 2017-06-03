@@ -1,0 +1,32 @@
+% Learning Challenge  -  Dataset ARFF-Export
+% ==========================================
+%
+% Dataset: Test
+% Subset:  training
+%
+%
+% Dataset Characteristics
+% -----------------------
+% dimensions:                  3
+% number of training points:   10
+% number of classes:           2
+
+@RELATION "Test--training"
+
+@ATTRIBUTE x0 NUMERIC
+@ATTRIBUTE x1 NUMERIC
+@ATTRIBUTE x2 NUMERIC
+
+@ATTRIBUTE class { 0,1}
+
+@DATA
+0, 0, 0, 0
+0, 1, 1, 0
+0, 2, 2, 0
+0, 3, 3, 0
+0, 4, 4, 0
+10, 0, 0, 1
+10, 1, 1, 1
+10, 2, 2, 1
+10, 3, 3, 1
+10, 4, 4, 1
