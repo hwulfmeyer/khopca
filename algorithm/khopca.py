@@ -4,7 +4,7 @@ import numpy
 
 def clustering(data, kmin, kmax):
     ## if data size < k of kNN => what happens?
-    kNN = 1
+    kNN = 1 #TODO why hardset as 1?
     data_length = data.shape[0]
     
     if kmin >= kmax:
@@ -21,7 +21,7 @@ def clustering(data, kmin, kmax):
         # 2.5. fill value array with data
         for i in range(0, data_length, 1):
             _, num = get_neighbors(i, data_adj, data_length)
-            data_value_array[i] = kmin if num <= kNN else kmax
+            data_value_array[i] = kmin if num <= kNN else kmax #TODO why value as kmin? randomn initilisation?
 
         # 3. apply all rules to data until nothing changes
         data_value_array = apply_rules_to_data(data_adj, data_value_array, data_length, kmin, kmax)
@@ -118,7 +118,7 @@ def rule_four(cur_node, cur_max, kmax):
         return cur_node
 
     
-def get_data_labels(adjmatrix, data_array):
+def get_data_labels(adjmatrix, data_array): #TODO labeling
     cluster_labels = numpy.zeros((data_array.shape[0],), dtype=numpy.int)
     return cluster_labels
 
