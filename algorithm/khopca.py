@@ -163,7 +163,7 @@ def get_data_labels(adjmatrix, data_array, kmax):
 def assign_clusters(nodes, clusterid, cur_depth, adjmatrix, cluster_labels, data_array):
     if cur_depth >= 0:       # kmin = 0, stop if at edge of cluster
         for i in nodes:
-            if cur_depth == data_array[i]:
+            if cur_depth == data_array[i] and cluster_labels[i] == 0:
                 cluster_labels[i] = clusterid
                 cur_neigh, _ = get_neighbors(i, adjmatrix)
                 assign_clusters(cur_neigh, clusterid, cur_depth-1, adjmatrix, cluster_labels, data_array)

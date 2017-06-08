@@ -27,11 +27,11 @@ def load_data(path):
 if __name__ == "__main__":
     print "clustering start"
     start = time.time()
-    clusterpath = "../iris_training.arff"
+    #clusterpath = "../iris_training.arff"
     #clusterpath = "../test.arff"
     #clusterpath = "../c_TRex.arff"
-    #clusterpath = "../c_Aggregation.arff"
-    clustering_test(clusterpath, "euclidean", 12, 20)
+    clusterpath = "../c_Aggregation.arff"
+    clustering_test(clusterpath, "euclidean", 10, 10)
     m, s = divmod(time.time()-start, 60)
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
     print "clustering end"
