@@ -1,13 +1,30 @@
-import helper
 import numpy
+from scipy.spatial import distance
 
 
-def clustering(data, d="euclidean", knn=1, kmax=1):
+"""TODO:
+- subsampling of data -> time constraints for clustering
+- extract labels from data
+"""
 
-    # data = data as numpy matrix
-    # d = distance metric as string
-    # kmax = maximum hops from the cluster center as integer
-    # kNN = the k for k-neares-neighbors as integer
+
+def cluster(data, knn, kmax, d):
+    """Clusters data with the khopca algorithm
+
+    Args:
+        data: data as numpy matrix
+        knn: the k for k-neares-neighbors as integer
+        kmax: maximum hops from the cluster center as integer
+        d: distance metric as string
+
+    Returns:
+        A one-dimensional array containing the labels for data
+        points, labels are integers
+
+    Raises:
+        none
+    """
+
 
     kmin = 0
     data_length = data.shape[0]
@@ -19,22 +36,69 @@ def clustering(data, d="euclidean", knn=1, kmax=1):
         print "Error: No Data to cluster"
     else:
         # 1. create adjacency matrix
-        data_adj = helper.create_Adjacent(data, knn)
+        data_adj = create_adjacent(data, knn)
 
+        print "adjacencymatrix done"
         # 2. create value array for data
         data_value_array = numpy.zeros((data_length,), dtype=numpy.int)
 
+        print "value array done"
         # 2.5. fill value array with data
         for i in range(0, data_length, 1):
             _, num = get_neighbors(i, data_adj, data_length)
             data_value_array[i] = kmin if num <= knn else kmax #TODO why value as kmin? randomn initilisation?
 
+        print "filling value array dne"
         # 3. apply all rules to data until nothing changes
-        ## print data_value_array
+        # print data_value_array
         data_value_array = apply_rules_to_data(data_adj, data_value_array, data_length, kmin, kmax)
         print data_value_array
         # 4. output clustering result
         return get_data_labels(data_adj, data_value_array)
+
+
+def find_indices(lst, condition):
+    return [i for i, elem in enumerate(lst) if condition(elem)]
+
+
+def create_adjacent(data, k):
+    datapointcount = data.shape[0]   # number of datapoints
+    # initialise datapointcount x datapointcount matrix with zeros
+    adjacent = numpy.zeros([datapointcount, datapointcount], float)
+
+    for row in range(0,datapointcount,1):
+        pointvector = data[row]
+        neighbor_points = []
+        neighbor_dst = []
+
+        for datapoint in range(0, datapointcount, 1):   # for every datapoint loop over every other datapoint
+            if row == datapoint:
+                continue
+
+            dst = distance.euclidean(pointvector, data[datapoint])
+
+            if len(neighbor_points) < k:         # at the beginning everything is your nearest neighbour
+                neighbor_points.append(datapoint)
+                neighbor_dst.append(dst)
+            else:
+                # search in neighborlist for old datapoints with greater distance
+                biggerIndexes = find_indices(neighbor_dst, lambda x: x > dst)
+
+                if len(biggerIndexes) > 0:
+                    # if found remove max-distance value and save new distance
+                    index = neighbor_dst.index(max(neighbor_dst))
+                    neighbor_dst.remove(neighbor_dst[index])
+                    neighbor_dst.insert(index, dst)
+
+                    neighbor_points.remove(neighbor_points[index])        # save also the datapoint
+                    neighbor_points.insert(index, datapoint)
+
+        for i in neighbor_points:    # construct adjacent matrix
+            adjacent[row][i] = 1
+            adjacent[i][row] = 1
+
+    return adjacent
+
 
 def get_neighbors(d, adjmatrix, length):
     neighbors = []
@@ -67,65 +131,28 @@ def apply_rules_to_data(adjmatrix, data_array, length, kmin, kmax):
 
         for i in range(0, length, 1):
             cur_max = get_max_neighbor(i, adjmatrix, data_array, length, kmin)
-            cur_node = data_array[i]
+            cur_node_old = data_array[i]
 
-            data_array[i] = rule_one(data_array[i], cur_max)
-            data_array[i] = rule_two(data_array[i], cur_max, kmin, kmax)
-            data_array[i] = rule_three(data_array[i], cur_max, kmax)
-            data_array[i] = rule_four(data_array[i], cur_max, kmax)
+            if cur_max > data_array[i]:      # rule 1
+                data_array[i] = cur_max - 1
 
-            if cur_node != data_array[i]:
+            if cur_max == kmin & data_array[i] == kmin:      # rule 2
+                data_array[i] = kmax
+
+            if cur_max <= data_array[i] & data_array[i] != kmax:      # rule 3
+                data_array[i] -= 1
+
+            if cur_max == kmax & data_array[i] == kmax:      # rule 4
+                # apply criterion to select a node from set (max(W(N(n)),w_n)? random? more edges?
+                data_array[i] -= 1
+
+            if data_array[i] != cur_node_old:
                 something_changed = True
 
     return data_array
 
 
-def rule_one(cur_node, cur_max):
-    """RULE 1
-    if max(W(N(n))) > w_n
-        w_n = max(W(N(n))) - 1"""
-
-    if cur_max > cur_node:
-        return cur_max-1
-    else:
-        return cur_node
-
-
-def rule_two(cur_node, cur_max, kmin, kmax):
-    """RULE 2
-    if max(W(N(n)) == MIN & w_n == MIN
-        w_n = MAX;"""
-
-    if cur_max == kmin & cur_node == kmin:
-        return kmax
-    else:
-        return cur_node
-
-
-def rule_three(cur_node, cur_max, kmax):
-    """RULE 3
-    if max(W(N(n))) <= w_n && w_n != MAX
-    w_n = w_n - 1;"""
-
-    if cur_max <= cur_node & cur_node != kmax:
-        return cur_node-1
-    else:
-        return cur_node
-
-
-def rule_four(cur_node, cur_max, kmax):
-    """RULE 4
-    if max(W(N(n)) == MAX && w_n == MAX
-        w_n = apply criterion to select a node from set (max(W(N(n)),w_n);
-        w_n = w_n - 1;"""
-    if cur_max == kmax & cur_node == kmax:
-        ## criterion? random? more edges?
-        return cur_node-1
-    else:
-        return cur_node
-
-
-def get_data_labels(adjmatrix, data_array): #TODO labeling
+def get_data_labels(adjmatrix, data_array):
+    #TODO labeling
     cluster_labels = numpy.zeros((data_array.shape[0],), dtype=numpy.int)
     return cluster_labels
-
