@@ -2,6 +2,12 @@ import numpy
 from scipy.spatial import distance
 
 
+# TODO: subsampling of data for kNN (really shitty performance = O(n^2)
+# TODO: add all distance measures
+# TODO: run by commandline how?????
+# TODO: print labels per line
+# TODO: clean up messy code
+# TODO: test with all datasets
 
 
 
@@ -21,8 +27,6 @@ def cluster(data, knn, kmax, d):
     Raises:
         none
     """
-
-    # TODO: subsampling of data -> time constraints for clustering
 
     kmin = 0
     data_length = data.shape[0]
