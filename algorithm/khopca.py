@@ -37,18 +37,16 @@ def cluster(data, knn, kmax, d):
     else:
         # 1. create adjacency matrix
         data_adj = create_adjacent(data, knn)
-
         print "adjacencymatrix done"
+
         # 2. create value array for data
         data_value_array = numpy.zeros((data_length,), dtype=numpy.int)
 
-        print "value array done"
         # 2.5. fill value array with data
         for i in range(0, data_length, 1):
             _, num = get_neighbors(i, data_adj, data_length)
             data_value_array[i] = kmin if num <= knn else kmax #TODO why value as kmin? randomn initilisation?
 
-        print "filling value array dne"
         # 3. apply all rules to data until nothing changes
         # print data_value_array
         data_value_array = apply_rules_to_data(data_adj, data_value_array, data_length, kmin, kmax)

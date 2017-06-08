@@ -29,8 +29,9 @@ if __name__ == "__main__":
     start = time.time()
     #clusterpath = "../iris_training.arff"
     #clusterpath = "../test.arff"
-    clusterpath = "../c_TRex.arff"
-    clustering_test(clusterpath, "euclidean", 1, 3)
+    #clusterpath = "../c_TRex.arff"
+    clusterpath = "../c_Aggregation.arff"
+    clustering_test(clusterpath, "euclidean", 500, 10)
     m, s = divmod(time.time()-start, 60)
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
     print "clustering end"
