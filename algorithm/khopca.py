@@ -2,10 +2,7 @@ import numpy
 from scipy.spatial import distance
 
 
-"""TODO:
-- subsampling of data -> time constraints for clustering
-- extract labels from data
-"""
+
 
 
 def cluster(data, knn, kmax, d):
@@ -25,6 +22,7 @@ def cluster(data, knn, kmax, d):
         none
     """
 
+    # TODO: subsampling of data -> time constraints for clustering
 
     kmin = 0
     data_length = data.shape[0]
@@ -37,34 +35,29 @@ def cluster(data, knn, kmax, d):
     else:
         # 1. create adjacency matrix
         data_adj = create_adjacent(data, knn)
-        print "adjacencymatrix done"
 
         # 2. create value array for data
         data_value_array = numpy.zeros((data_length,), dtype=numpy.int)
 
         # 2.5. fill value array with data
         for i in range(0, data_length, 1):
-            _, num = get_neighbors(i, data_adj, data_length)
-            data_value_array[i] = kmin if num <= knn else kmax #TODO why value as kmin? randomn initilisation?
+            _, num = get_neighbors(i, data_adj)
+            data_value_array[i] = num if num <= knn else kmax
 
         # 3. apply all rules to data until nothing changes
-        # print data_value_array
-        data_value_array = apply_rules_to_data(data_adj, data_value_array, data_length, kmin, kmax)
+        data_value_array = apply_rules_to_data(data_adj, data_value_array, kmin, kmax)
         print data_value_array
+
         # 4. output clustering result
-        return get_data_labels(data_adj, data_value_array)
-
-
-def find_indices(lst, condition):
-    return [i for i, elem in enumerate(lst) if condition(elem)]
+        return get_data_labels(data_adj, data_value_array, kmax)
 
 
 def create_adjacent(data, k):
     datapointcount = data.shape[0]   # number of datapoints
     # initialise datapointcount x datapointcount matrix with zeros
-    adjacent = numpy.zeros([datapointcount, datapointcount], float)
+    adjacent = numpy.zeros([datapointcount, datapointcount], bool)
 
-    for row in range(0,datapointcount,1):
+    for row in range(0, datapointcount, 1):
         pointvector = data[row]
         neighbor_points = []
         neighbor_dst = []
@@ -75,44 +68,42 @@ def create_adjacent(data, k):
 
             dst = distance.euclidean(pointvector, data[datapoint])
 
-            if len(neighbor_points) < k:         # at the beginning everything is your nearest neighbour
+            if len(neighbor_points) < k:         # for the first k points they are our current neighbors
                 neighbor_points.append(datapoint)
                 neighbor_dst.append(dst)
             else:
-                # search in neighborlist for old datapoints with greater distance
-                biggerIndexes = find_indices(neighbor_dst, lambda x: x > dst)
-
-                if len(biggerIndexes) > 0:
+                maxndst = max(neighbor_dst)
+                if maxndst > dst:
                     # if found remove max-distance value and save new distance
-                    index = neighbor_dst.index(max(neighbor_dst))
-                    neighbor_dst.remove(neighbor_dst[index])
-                    neighbor_dst.insert(index, dst)
+                    index = neighbor_dst.index(maxndst)
+                    del neighbor_dst[index]
+                    neighbor_dst.append(dst)
 
-                    neighbor_points.remove(neighbor_points[index])        # save also the datapoint
-                    neighbor_points.insert(index, datapoint)
+                    del neighbor_points[index]       # save also the datapoint
+                    neighbor_points.append(datapoint)
 
         for i in neighbor_points:    # construct adjacent matrix
-            adjacent[row][i] = 1
-            adjacent[i][row] = 1
+            adjacent[row][i] = True
+            adjacent[i][row] = True
 
     return adjacent
 
 
-def get_neighbors(d, adjmatrix, length):
+def get_neighbors(nodeid, adjmatrix):
     neighbors = []
     num = 0
 
-    for i in range(0,length,1):
-        if adjmatrix[i][d] == 1:
+    for i in range(0, adjmatrix.shape[0], 1):
+        if adjmatrix[i][nodeid]:
             neighbors.append(i)
             num += 1
 
     return neighbors, num
 
 
-def get_max_neighbor(nodeid, adjmatrix, data_array, length, kmin):
+def get_max_neighbor(nodeid, adjmatrix, data_array, kmin):
     cur_max = kmin
-    neighbors, _ = get_neighbors(nodeid, adjmatrix, length)
+    neighbors, _ = get_neighbors(nodeid, adjmatrix)
 
     for i in range(0, len(neighbors), 1):
         if data_array[neighbors[i]] > cur_max:
@@ -121,14 +112,14 @@ def get_max_neighbor(nodeid, adjmatrix, data_array, length, kmin):
     return cur_max
 
 
-def apply_rules_to_data(adjmatrix, data_array, length, kmin, kmax):
+def apply_rules_to_data(adjmatrix, data_array, kmin, kmax):
     something_changed = True
 
     while something_changed:
         something_changed = False
 
-        for i in range(0, length, 1):
-            cur_max = get_max_neighbor(i, adjmatrix, data_array, length, kmin)
+        for i in range(0, data_array.shape[0], 1):
+            cur_max = get_max_neighbor(i, adjmatrix, data_array, kmin)
             cur_node_old = data_array[i]
 
             if cur_max > data_array[i]:      # rule 1
@@ -150,7 +141,25 @@ def apply_rules_to_data(adjmatrix, data_array, length, kmin, kmax):
     return data_array
 
 
-def get_data_labels(adjmatrix, data_array):
+def get_data_labels(adjmatrix, data_array, kmax):
     #TODO labeling
     cluster_labels = numpy.zeros((data_array.shape[0],), dtype=numpy.int)
+    clustercenters = [i for i, elem in enumerate(data_array) if elem == kmax]
+
+    clusterid = 1
+    for i in clustercenters:
+        cluster_labels[i] = clusterid
+        cur_neigh, _ = get_neighbors(i, adjmatrix)
+        assign_clusters(cur_neigh, clusterid, kmax-1, adjmatrix, cluster_labels, data_array)
+        clusterid += 1
+
     return cluster_labels
+
+
+def assign_clusters(nodes, clusterid, cur_depth, adjmatrix, cluster_labels, data_array):
+    if cur_depth >= 0:       # kmin = 0, stop if at edge of cluster
+        for i in nodes:
+            if cur_depth == data_array[i]:
+                cluster_labels[i] = clusterid
+                cur_neigh, _ = get_neighbors(i, adjmatrix)
+                assign_clusters(cur_neigh, clusterid, cur_depth-1, adjmatrix, cluster_labels, data_array)

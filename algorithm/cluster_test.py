@@ -6,7 +6,7 @@ import khopca
 
 def clustering_test(datapath, d, knn, kmax):
     data = load_data(datapath)
-    khopca.cluster(data, knn, kmax, d)
+    print khopca.cluster(data, knn, kmax, d)
 
 
 def load_data(path):
@@ -27,11 +27,11 @@ def load_data(path):
 if __name__ == "__main__":
     print "clustering start"
     start = time.time()
-    #clusterpath = "../iris_training.arff"
+    clusterpath = "../iris_training.arff"
     #clusterpath = "../test.arff"
     #clusterpath = "../c_TRex.arff"
-    clusterpath = "../c_Aggregation.arff"
-    clustering_test(clusterpath, "euclidean", 500, 10)
+    #clusterpath = "../c_Aggregation.arff"
+    clustering_test(clusterpath, "euclidean", 12, 20)
     m, s = divmod(time.time()-start, 60)
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
     print "clustering end"
