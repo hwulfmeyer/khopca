@@ -2,16 +2,23 @@ import helper
 import numpy
 
 
-def clustering(data, kmin, kmax):
-    kNN = 1
+def clustering(data, d="euclidean", knn=1, kmax=1):
+
+    # data = data as numpy matrix
+    # d = distance metric as string
+    # kmax = maximum hops from the cluster center as integer
+    # kNN = the k for k-neares-neighbors as integer
+
+    kmin = 0
     data_length = data.shape[0]
+    print "Clustering with: " + str(data_length) + "points, " + str(knn) + "=kNN, " + str(kmax) + "=kmax"
     if kmin >= kmax:
         print "Error: MIN must be smaller than MAX"
     elif data_length == 0:
         print "Error: No Data to cluster"
     else:
         # 1. create adjacency matrix
-        data_adj = helper.create_Adjacent(data, kNN)
+        data_adj = helper.create_Adjacent(data, knn)
 
         # 2. create value array for data
         data_value_array = numpy.zeros((data_length,), dtype=numpy.int)
@@ -19,10 +26,10 @@ def clustering(data, kmin, kmax):
         # 2.5. fill value array with data
         for i in range(0, data_length, 1):
             _, num = get_neighbors(i, data_adj, data_length)
-            data_value_array[i] = kmin if num <= kNN else kmax
+            data_value_array[i] = kmin if num <= knn else kmax
 
         # 3. apply all rules to data until nothing changes
-        print data_value_array
+        ## print data_value_array
         data_value_array = apply_rules_to_data(data_adj, data_value_array, data_length, kmin, kmax)
         print data_value_array
         # 4. output clustering result

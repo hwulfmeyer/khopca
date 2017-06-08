@@ -24,15 +24,12 @@ def create_Adjacent(data, k):
     datapointcount = data.shape[0]   #number of datapoints
     adjacent = numpy.zeros([datapointcount, datapointcount], float) #initialise datapointcount x datapointcount matrix with zeros
 
-
     for row in range(0,datapointcount,1):
-
         pointvector = data[row]
         neighborPoints = []
         neighborDst = []
 
         for datapoint in range(0,datapointcount,1):   #for every datapoint loop over every other datapoint
-
             if row == datapoint:
                 continue
 
@@ -41,13 +38,10 @@ def create_Adjacent(data, k):
             if len(neighborPoints) < k:     #at the beginning everything is your nearest neighbour
                 neighborPoints.append(datapoint)
                 neighborDst.append(dst)
-
             else:
-
                 biggerIndexes = find_indices(neighborDst, lambda x: x > dst)  #search in neighborlist for old datapoints with greater distance
 
                 if len(biggerIndexes) > 0:
-
                     index = neighborDst.index(max(neighborDst))         #if found remove max-distance value and save new distance
                     neighborDst.remove(neighborDst[index])
                     neighborDst.insert(index,dst)
