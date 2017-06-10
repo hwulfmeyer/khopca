@@ -1,17 +1,15 @@
 import numpy
+import random
 from scipy.spatial import distance
 
 
-# TODO: subsampling of data for kNN (really shitty performance = O(n^2)
 # TODO: add all distance measures
-# TODO: run by commandline how?????
 # TODO: print labels per line
+# TODO: run by commandline
 # TODO: clean up messy code
-# TODO: test with all datasets
 
 
-
-def cluster(data, knn, kmax, d):
+def cluster(data, knn, kmax, d, subsampling=True):
     """Clusters data with the khopca algorithm
 
     Args:
@@ -27,33 +25,93 @@ def cluster(data, knn, kmax, d):
     Raises:
         none
     """
-
+    subsamplesize = 0.75
     kmin = 0
-    data_length = data.shape[0]
-    print "Clustering with: " + str(data_length) + "points, " + str(knn) + "=kNN, " + str(kmax) + "=kmax"
+    originaldata = data
+    indices_kept = None
+
+    print "Clustering with: " + str(data.shape[0]) + "points, " + str(knn) + "=kNN, " + str(kmax) + "=kmax"
+    if subsampling:
+        data, indices_kept = create_subsample(data, subsamplesize)
+        print "using subsample of " + str(data.shape[0]) + " points for clustering"
 
     if kmin >= kmax:
         print "Error: MIN must be smaller than MAX"
-    elif data_length == 0:
+    elif data.shape[0] == 0:
         print "Error: No Data to cluster"
     else:
         # 1. create adjacency matrix
         data_adj = create_adjacent(data, knn)
 
         # 2. create value array for data
-        data_value_array = numpy.zeros((data_length,), dtype=numpy.int)
+        data_value_array = numpy.zeros((data.shape[0],), dtype=numpy.int)
 
         # 2.5. fill value array with data
-        for i in range(0, data_length, 1):
+        for i in range(0, data.shape[0], 1):
             _, num = get_neighbors(i, data_adj)
             data_value_array[i] = num if num <= knn else kmax
 
         # 3. apply all rules to data until nothing changes
         data_value_array = apply_rules_to_data(data_adj, data_value_array, kmin, kmax)
-        print data_value_array
+
+        # 4. get labels for data
+        data_labels = get_data_labels(data_adj, data_value_array, kmax)
+
+        if subsampling:
+            data_labels = fit_subsample_on_data(data, originaldata, data_labels, indices_kept)
 
         # 4. output clustering result
-        return get_data_labels(data_adj, data_value_array, kmax)
+        return data_labels
+
+
+def create_subsample(data, p):
+    """Create a subsample of data with p(=percentege) of the data"""
+    length = data.shape[0]
+    keep = int(length * p)
+    x = numpy.zeros((length,), dtype=numpy.int)
+
+    for i in range(0, x.shape[0], 1):
+        x[i] = i
+
+    random.shuffle(x)
+    x = x[:keep]
+    newdata = numpy.zeros((keep, data.shape[1]), dtype=numpy.float)
+
+    for i in range(0, x.shape[0], 1):
+            newdata[i] = data[x[i]]
+
+    return newdata, x
+
+
+def fit_subsample_on_data(data, originaldata, datalabels, indices):
+    k = 1
+    fitted_datalabels = numpy.zeros((originaldata.shape[0],), dtype=numpy.int)
+    for ip in range(0,originaldata.shape[0],1):
+        if ip in indices:
+            fitted_datalabels[ip] = datalabels[numpy.where(indices == ip)]
+            continue
+
+        neighbor_points = []
+        neighbor_dst = []
+
+        for sp in range(0, data.shape[0], 1):
+            dst = distance.euclidean(originaldata[ip], data[sp])
+            if len(neighbor_points) < k:         # for the first k points they are our current neighbors
+                neighbor_points.append(datalabels[sp])
+                neighbor_dst.append(dst)
+            else:
+                maxndst = max(neighbor_dst)
+                if maxndst > dst:
+                    # if found remove max-distance value and save new distance
+                    index = neighbor_dst.index(maxndst)
+                    del neighbor_dst[index]
+                    neighbor_dst.append(dst)
+
+                    del neighbor_points[index]       # save also the datapoint
+                    neighbor_points.append(datalabels[sp])
+        fitted_datalabels[ip] = neighbor_points[0]
+
+    return fitted_datalabels
 
 
 def create_adjacent(data, k):
@@ -146,10 +204,9 @@ def apply_rules_to_data(adjmatrix, data_array, kmin, kmax):
 
 
 def get_data_labels(adjmatrix, data_array, kmax):
-    #TODO labeling
     cluster_labels = numpy.zeros((data_array.shape[0],), dtype=numpy.int)
     clustercenters = [i for i, elem in enumerate(data_array) if elem == kmax]
-
+    print "found " + str(len(clustercenters)) + " cluster center"
     clusterid = 1
     for i in clustercenters:
         cluster_labels[i] = clusterid

@@ -44,7 +44,7 @@ print c
 adjacent = numpy.zeros([2,2], float)
 print adjacent[1][1]
 
-'''
+
 
 x = numpy.array([[1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12]])
 
@@ -55,3 +55,12 @@ node = x[3][1]
 node = node - 1
 
 print x[3][1]
+'''
+
+
+import random
+
+x = [1, 2, 3, 4, 3, 4]
+random.shuffle(x)
+
+print x
