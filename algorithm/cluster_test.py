@@ -8,14 +8,14 @@ from os.path import isfile, join
 
 __available_measures = ['euclidean']
 
-"""__available_measures = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 'dice',
-                        'euclidean', 'hamming', 'jaccard', 'kulsinski', 'mahalanobis', 'matching', 'minkowski',
-                        'rogerstanimoto', 'russellrao', 'seuclidean', 'sokalmichener', 'sokalsneath', 'sqeuclidean',
+"""__available_measures = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 
+                        'euclidean', 'hamming', 'jaccard', 'matching',
+                        'seuclidean', 'sqeuclidean',
                         'yule']"""
 
-def clustering_test(datapath, d, knn, kmax):
+def clustering_test(datapath, dstmeasure, knn, kmax):
     data,_ = load_data(datapath)
-    print khopca.cluster(data, knn, kmax, d)
+    print khopca.cluster(data, knn, kmax, dstmeasure)
 
 
 def load_data(path):
