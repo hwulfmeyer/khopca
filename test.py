@@ -60,7 +60,8 @@ print x[3][1]
 
 import random
 
-x = [1, 2, 3, 4, 3, 4]
-random.shuffle(x)
+x = ([1, 2, 3],[4, 5, 6])
+y = (x[0], x[1])
 
-print x
+print distance.pdist(y,'euclidean')
+

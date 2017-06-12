@@ -3,10 +3,7 @@ import random
 from scipy.spatial import distance
 
 
-# TODO: add all distance measures
-# TODO: print labels per line
 # TODO: run by commandline
-# TODO: clean up messy code
 
 def cluster(data, knn, kmax, dstmeasure, subsampling=True):
     """Clusters data with the khopca algorithm
@@ -104,6 +101,7 @@ def create_adjacent(data, k, measure):
     datapointcount = data.shape[0]   # number of datapoints
     # initialise datapointcount x datapointcount matrix with zeros
     adjacent = numpy.zeros([datapointcount, datapointcount], bool)
+    print "using " + measure
 
     for row in range(0, datapointcount, 1):
         neighbor_points = []

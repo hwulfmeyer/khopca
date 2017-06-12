@@ -6,24 +6,23 @@ from os import listdir
 from os.path import isfile, join
 
 
-__available_measures = ['euclidean']
 
-"""__available_measures = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 
+__available_measures = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine',
                         'euclidean', 'hamming', 'jaccard', 'matching',
                         'seuclidean', 'sqeuclidean',
-                        'yule']"""
+                        'yule']
 
 def clustering_test(datapath, dstmeasure, knn, kmax):
     data,_ = load_data(datapath)
-    print khopca.cluster(data, knn, kmax, dstmeasure)
-
+    labels = khopca.cluster(data, knn, kmax, dstmeasure)
+    for i in range(0,len(labels),1):
+        print labels[i]
 
 def load_data(path):
     """ Loads a data set from path. Data set must be arff format.
 
     Args:
         path: path to the data set
-# TODO: test with all datasets
     Returns:
         a numpy-matrix. each column represents an attribute
         each row a data item
@@ -34,6 +33,7 @@ def load_data(path):
     else:
         data_transform = data[meta.names()[:-1]].copy().reshape(data.shape + (-1, ))
         return data_transform.view(numpy.float), data.shape[0]
+
 
 
 def test_all_datasets(cluster_function, measure):
@@ -108,6 +108,7 @@ if __name__ == "__main__":
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
     print "clustering end"""
 
-    run_tests(lambda data, measure: khopca.cluster(data, 35, 3000, measure))
-    #test.test_all_measure(lambda data, measure: flame_cluster(data, 3, 0.1, measure, 17), "minkowski", process_count=8)
+    for measure in __available_measures:
+        clustering_test("../iris_training.arff",measure , 5, 1000 )
+    #run_tests(lambda data, measure: khopca.cluster(data, 35, 3000, measure))
 
