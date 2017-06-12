@@ -20,20 +20,26 @@ def clustering_test(datapath, dstmeasure, knn, kmax):
         print labels[i]
 
 def load_data(path):
-    """ Loads a data set from path. Data set must be arff format.
-
-    Args:
-        path: path to the data set
-    Returns:
-        a numpy-matrix. each column represents an attribute
-        each row a data item
     """
+       Load a data set from path. Data set must be arff format.
+
+       :param path: path to the data set
+       :return: a numpy-matrix. each column represents an attribute; each row a data item
+       """
     data, meta = arff.loadarff(open(path, 'r'))
     if data.shape == (0,):
         return numpy.empty((0, len(meta._attributes))), 0
     else:
-        data_transform = data[meta.names()[:-1]].copy().reshape(data.shape + (-1, ))
-        return data_transform.view(numpy.float), data.shape[0]
+        data_matrix = numpy.zeros(shape=(data.shape[0], len(data[0]) - 1))
+
+        for i in range(len(data)):
+            arff_row = data[i]
+
+            for j in range(len(arff_row) - 1):
+                data_matrix[i][j] = arff_row[j]
+
+    return data_matrix, data.shape[0]
+
 
 
 
@@ -109,7 +115,6 @@ if __name__ == "__main__":
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
     print "clustering end"""
 
-    clustering_test(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    clustering_test(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
     #clustering_test("../test.arff", "euclidean" , 3, 5)
-    #run_tests(lambda data, measure: khopca.cluster(data, 35, 3000, measure))
 

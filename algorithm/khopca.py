@@ -3,7 +3,6 @@ import random
 from scipy.spatial import distance
 
 
-# TODO: run by commandline
 
 def cluster(data, knn, kmax, dstmeasure, subsampling=True):
     """Clusters data with the khopca algorithm
@@ -26,10 +25,10 @@ def cluster(data, knn, kmax, dstmeasure, subsampling=True):
     originaldata = data
     indices_kept = None
 
-    print "Clustering with: " + str(data.shape[0]) + "points, " + str(knn) + "=kNN, " + str(kmax) + "=kmax"
+    #print "Clustering with: " + str(data.shape[0]) + "points, " + str(knn) + "=kNN, " + str(kmax) + "=kmax"
     if subsampling:
         data, indices_kept = create_subsample(data, subsamplesize)
-        print "using subsample of " + str(data.shape[0]) + " points for clustering"
+        #print "using subsample of " + str(data.shape[0]) + " points for clustering"
 
     if kmin >= kmax:
         print "Error: MIN must be smaller than MAX"
@@ -101,7 +100,6 @@ def create_adjacent(data, k, measure):
     datapointcount = data.shape[0]   # number of datapoints
     # initialise datapointcount x datapointcount matrix with zeros
     adjacent = numpy.zeros([datapointcount, datapointcount], bool)
-    print "using " + measure
 
     for row in range(0, datapointcount, 1):
         neighbor_points = []
@@ -133,7 +131,6 @@ def create_adjacent(data, k, measure):
         for i in neighbor_points:    # construct adjacent matrix
             adjacent[row][i] = True
             adjacent[i][row] = True
-    print "adjacentbuilding finished"
     return adjacent
 
 def get_neighbors(nodeid, adjmatrix):
@@ -182,13 +179,12 @@ def apply_rules_to_data(adjmatrix, data_array, kmin, kmax):
 
             if data_array[i] != cur_node_old:
                 something_changed = True
-    print "ruleapplying finished"
     return data_array
 
 def get_data_labels(adjmatrix, data_array, kmax):
     cluster_labels = numpy.zeros((data_array.shape[0],), dtype=numpy.int)
     clustercenters = [i for i, elem in enumerate(data_array) if elem == kmax]
-    print "found " + str(len(clustercenters)) + " cluster center"
+    #print "found " + str(len(clustercenters)) + " cluster center"
     clusterid = 1
     for i in clustercenters:
         cluster_labels[i] = clusterid
