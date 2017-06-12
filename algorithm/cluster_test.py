@@ -13,11 +13,13 @@ __available_measures = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'cor
                         'seuclidean', 'sqeuclidean',
                         'yule']
 
+
 def clustering_test(datapath, dstmeasure, knn, kmax):
     data,_ = load_data(datapath)
     labels = khopca.cluster(data, knn, kmax, dstmeasure)
     for i in range(0,len(labels),1):
         print labels[i]
+
 
 def load_data(path):
     """
@@ -39,8 +41,6 @@ def load_data(path):
                 data_matrix[i][j] = arff_row[j]
 
     return data_matrix, data.shape[0]
-
-
 
 
 def test_all_datasets(cluster_function, measure):
@@ -116,5 +116,5 @@ if __name__ == "__main__":
     print "clustering end"""
 
     #clustering_test(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
-    clustering_test("../test.arff", "euclidean" , 3, 5)
+    clustering_test("../iris_training.arff", "euclidean" , 3, 5)
 

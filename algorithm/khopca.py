@@ -27,7 +27,7 @@ def cluster(data, knn, kmax, d, subsampling=False):
     originaldata = data
     indices_kept = None
 
-    #print "Clustering with: " + str(data.shape[0]) + "points, " + str(knn) + "=kNN, " + str(kmax) + "=kmax"
+    print "Clustering with: " + str(data.shape[0]) + "points, " + str(knn) + "=kNN, " + str(kmax) + "=kmax"
     if subsampling:
         data, indices_kept = create_subsample(data, subsamplesize)
         #print "using subsample of " + str(data.shape[0]) + " points for clustering"
@@ -38,8 +38,8 @@ def cluster(data, knn, kmax, d, subsampling=False):
         print "Error: No Data to cluster"
     else:
         # 1. create adjacency matrix
-        data_adj = get_knn_adjacency(data, knn)
-
+        #data_adj = get_knn_adjacency(data, knn)
+        data_adj = get_approxiamte_knn_adjacency(data, knn)
         # 2. create value array for data
         data_value_array = numpy.zeros((data.shape[0],), dtype=numpy.int)
 
@@ -58,57 +58,152 @@ def cluster(data, knn, kmax, d, subsampling=False):
             data_labels = fit_subsample_on_data(data, originaldata, data_labels, indices_kept)
 
         # 4. output clustering result
+        print data_labels
         return data_labels
 
 
 class BinaryNode:
-    def __init__(self, dim, median, points):
-        self.dimension = dim      # the dimension in which the median was searched in
-        self.median = median      # the value of the median
-        self.binpoints = points        # indices of the points contained in this node/bin
-        self.left = BinaryNode    # "contains" points before median: < median
-        self.right = BinaryNode   # "contains" points after median: >= median
+    def __init__(self, dim, median, points, parent, side):
+        self.dimension = dim      # the dimension for which the median is for
+        self.median = median      # the point containing the median for this node
+        self.binpoints = points   # points contained in this node/bin
+        self.parent = parent      # parentnode
+        self.side = side        # side of this node left = True, right = False
+        self.left = None    # "contains" points before median: < median
+        self.right = None   # "contains" points after median: >= median
 
+    @staticmethod
+    def build_kdtree(points_in_bin, parent, side):
+        # return None if empty
+        if len(points_in_bin) == 0:
+            return None
+        else:
+            # find dimension with greatest variance
+            cur_greatest_dim = [0, 0]           # [value][dimension]
+            for k in range(0, points_in_bin.shape[1], 1):
+                dimvalues = points_in_bin[:, k]          # numpy array containing all values in column/dimension i
+                # calculate variance & compare with current greatest
+                curdim = numpy.var(dimvalues)
+                if curdim >= cur_greatest_dim[0]:
+                    cur_greatest_dim[0] = curdim
+                    cur_greatest_dim[1] = k
 
-def build_kdtree(binpoints):
-    # return None if empty
-    pointsize = binpoints.shape[0]
-    if pointsize == 0:
-        return None
+            dimension = cur_greatest_dim[1]
 
-    # find dimension with greatest variance
-    cur_greatest_dim = [0, 0]           # [value][dimension]
-    for i in range(0, binpoints.shape[1], 1):
-        dimvalues = binpoints[:, i]          # numpy array containing all values in column i
-        # calculate variance
-        curdim = numpy.var(dimvalues)
-        if curdim >= cur_greatest_dim[0]:
-            cur_greatest_dim[0] = curdim
-            cur_greatest_dim[1] = i
+            # sort a fixed ie. ~30% number of randomly selected points,
+            # and use the median of those points to serve as the splitting plane.
+            """keep = int(dimvalues.shape[0] * 0.3)    # percentage of 30% are kept in the compact dimvalues
+            random.shuffle(dimvalues)
+            dimvalues_compact = dimvalues[:keep]"""
 
-    dimension = cur_greatest_dim[1]
+            # find median
+            sorted_points = points_in_bin[points_in_bin[:, dimension].argsort()]    # sort points according to dimension
+            medianindex = int(points_in_bin.shape[0] / 2)  # int rounding = floor() => int(1/2) = 0
+            median = numpy.copy(points_in_bin[medianindex])
 
-    # sort a fixed ie. ~30% number of randomly selected points,
-    # and use the median of those points to serve as the splitting plane.
-    """keep = int(dimvalues.shape[0] * 0.3)    # percentage of 30% are kept in the compact dimvalues
-    random.shuffle(dimvalues)
-    dimvalues_compact = dimvalues[:keep]"""
+            # create node for this iteration
+            node = BinaryNode(dimension, median, points_in_bin, parent, "left")
+            # Create child nodes and construct subtree with remaining binpoints
+            node.left = BinaryNode.build_kdtree(points_in_bin[:medianindex], node, "left")       # everythin from 0 to medianindex (excluding medianindex)
+            node.right = BinaryNode.build_kdtree(points_in_bin[medianindex + 1:], node, "right")  # everythin medianindex to the end (exluding mdedianindex)
+            return node
 
-    sorted_points = binpoints[binpoints[:, dimension].argsort()]    # sort points according to dimension
-    medianindex = int(pointsize/2)  # int rounding = floor() => int(1/2) = 0
-    median = binpoints[medianindex]
+    @staticmethod
+    def find_bin(node, q):
 
-    # create node of this function call
-    node = BinaryNode(dimension, median, binpoints)
+        if q[node.dimension] >= node.median[node.dimension]:    # if true => go right
+            if node.right is not None:
+                return node.find_bin(node.right, q)
+            else:
+                return node
 
-    # Create child nodes and construct subtree with remaining binpoints
-    node.left = build_kdtree(binpoints[:medianindex])       # everythin from 0 to medianindex (excluding medianindex)
-    node.right = build_kdtree(binpoints[medianindex + 1:])  # everythin medianindex to the end (exluding mdedianindex)
-    return BinaryNode
+        else:  # go left
+            if node.left is not None:
+                return node.find_bin(node.left, q)
+            else:
+                return node
 
 
 def get_approxiamte_knn_adjacency(data, k):
-    pass
+    data_size = data.shape[0]   # number of datapoints
+    adjacent = numpy.zeros([data_size, data_size], bool)
+    data_kdtree = BinaryNode.build_kdtree(data, None, "")
+
+    # iterate over all points and find the kNN in the kdtree
+    for k in range(0, data_size, 1):
+        neighbor_points = []
+        neighbor_dst = []
+
+        binofk = BinaryNode.find_bin(data_kdtree, data[k])
+        # if knn = same point
+        if (data[k]-binofk.median).all():
+            binofk = binofk.parent
+
+        neighbor_points.append(binofk.median)
+        neighbor_dst.append(distance.euclidean(data[k], binofk.median))
+
+        while len(neighbor_points) < k:
+            neighbor_points.append(binofk.median)
+            neighbor_dst.append(distance.euclidean(data[k], binofk.median)*9999999)
+        print neighbor_points
+        found_knn = False
+        side_to_add = None
+        if binofk.side == "Left":
+            side_to_add = "Right"
+        else:
+            side_to_add = "Left"
+        cur_node = binofk.parent
+        next_parent = None
+        while not found_knn:
+            next_parent = cur_node.parent
+            # traverse left/right node of current one
+            nodes = []
+            if cur_node.right is not None and side_to_add == "Right":
+                nodes.append(cur_node.right)
+            if cur_node.left is not None and side_to_add == "Left":
+                nodes.append(cur_node.left)
+            while len(nodes) > 0:
+                cur_node = nodes[-1]
+                del nodes[-1]
+                maxndst = max(neighbor_dst)
+                dst = distance.euclidean(data[k], cur_node.median)
+                if maxndst > dst:
+                    # if found remove max-distance value and save new distance
+                    index = neighbor_dst.index(maxndst)
+                    del neighbor_dst[index]
+                    neighbor_dst.append(dst)
+
+                    del neighbor_points[index]  # save also the datapoint
+                    neighbor_points.append(cur_node.median)
+                    #iterate of their childs
+                    if cur_node.right is not None:
+                        nodes.append(cur_node.right)
+                    if cur_node.left is not None:
+                        nodes.append(cur_node.left)
+
+            if next_parent is not None:
+                maxndst = max(neighbor_dst)
+                dst = distance.euclidean(data[k], next_parent.median)
+                if maxndst < dst:
+                    found_knn = True
+                else:
+                    cur_node = next_parent
+                if cur_node.side == "Left":
+                    side_to_add = "Right"
+                else:
+                    side_to_add = "Left"
+            else:
+                found_knn = True
+
+        neighbor_points_indices = []
+        print neighbor_points
+        for i in neighbor_points:
+            neighbor_points_indices.append(numpy.where(data == i))
+
+        for i in neighbor_points_indices:    # construct adjacent matrix
+            adjacent[k][i] = True
+            adjacent[i][k] = True
+    return adjacent
 
 
 def create_subsample(data, p):
@@ -128,37 +223,6 @@ def create_subsample(data, p):
             newdata[i] = data[x[i]]
 
     return newdata, x
-
-
-def fit_subsample_on_data(data, originaldata, datalabels, indices):
-    k = 1
-    fitted_datalabels = numpy.zeros((originaldata.shape[0],), dtype=numpy.int)
-    for ip in range(0,originaldata.shape[0],1):
-        if ip in indices:
-            fitted_datalabels[ip] = datalabels[numpy.where(indices == ip)]
-            continue
-
-        neighbor_points = []
-        neighbor_dst = []
-
-        for sp in range(0, data.shape[0], 1):
-            dst = distance.euclidean(originaldata[ip], data[sp])
-            if len(neighbor_points) < k:         # for the first k points they are our current neighbors
-                neighbor_points.append(datalabels[sp])
-                neighbor_dst.append(dst)
-            else:
-                maxndst = max(neighbor_dst)
-                if maxndst > dst:
-                    # if found remove max-distance value and save new distance
-                    index = neighbor_dst.index(maxndst)
-                    del neighbor_dst[index]
-                    neighbor_dst.append(dst)
-
-                    del neighbor_points[index]       # save also the datapoint
-                    neighbor_points.append(datalabels[sp])
-        fitted_datalabels[ip] = neighbor_points[0]
-
-    return fitted_datalabels
 
 
 def get_knn_adjacency(data, k):
@@ -247,7 +311,6 @@ def apply_rules_to_data(adjmatrix, data_array, kmin, kmax):
                 something_changed = True
     return data_array
 
-
 def get_data_labels(adjmatrix, data_array, kmax):
     cluster_labels = numpy.zeros((data_array.shape[0],), dtype=numpy.int)
     clustercenters = [i for i, elem in enumerate(data_array) if elem == kmax]
@@ -269,3 +332,34 @@ def assign_clusters(nodes, clusterid, cur_depth, adjmatrix, cluster_labels, data
                 cluster_labels[i] = clusterid
                 cur_neigh, _ = get_neighbors(i, adjmatrix)
                 assign_clusters(cur_neigh, clusterid, cur_depth-1, adjmatrix, cluster_labels, data_array)
+
+
+def fit_subsample_on_data(data, originaldata, datalabels, indices):
+    k = 1
+    fitted_datalabels = numpy.zeros((originaldata.shape[0],), dtype=numpy.int)
+    for ip in range(0,originaldata.shape[0],1):
+        if ip in indices:
+            fitted_datalabels[ip] = datalabels[numpy.where(indices == ip)]
+            continue
+
+        neighbor_points = []
+        neighbor_dst = []
+
+        for sp in range(0, data.shape[0], 1):
+            dst = distance.euclidean(originaldata[ip], data[sp])
+            if len(neighbor_points) < k:         # for the first k points they are our current neighbors
+                neighbor_points.append(datalabels[sp])
+                neighbor_dst.append(dst)
+            else:
+                maxndst = max(neighbor_dst)
+                if maxndst > dst:
+                    # if found remove max-distance value and save new distance
+                    index = neighbor_dst.index(maxndst)
+                    del neighbor_dst[index]
+                    neighbor_dst.append(dst)
+
+                    del neighbor_points[index]       # save also the datapoint
+                    neighbor_points.append(datalabels[sp])
+        fitted_datalabels[ip] = neighbor_points[0]
+
+    return fitted_datalabels
