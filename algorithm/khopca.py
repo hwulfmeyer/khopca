@@ -177,7 +177,7 @@ def apply_rules_to_data(adjmatrix, data_array, kmin, kmax):
                 data_array[i] -= 1
 
             if cur_max == kmax & data_array[i] == kmax:      # rule 4
-                # apply criterion to select a node from set (max(W(N(n)),w_n)? random? more edges?
+                # apply criterion to select a node from set (max(W(N(n)),w_n)
                 data_array[i] -= 1
 
             if data_array[i] != cur_node_old:
