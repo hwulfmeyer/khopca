@@ -21,10 +21,10 @@ def clustering_test(datapath, dstmeasure, knn, kmax):
 
 def load_data(path):
     """
-       Load a data set from path. Data set must be arff format.
+       Load a data set in arff formatfrom path.
 
-       :param path: path to the data set
-       :return: a numpy-matrix. each column represents an attribute; each row a data item
+       :param path: to the data set
+       :return: a numpy-matrix. column = attribute;  row a data point
        """
     data, meta = arff.loadarff(open(path, 'r'))
     if data.shape == (0,):
