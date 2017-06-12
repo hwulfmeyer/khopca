@@ -4,6 +4,7 @@ from scipy.io import arff
 import khopca
 from os import listdir
 from os.path import isfile, join
+import sys
 
 
 
@@ -108,7 +109,7 @@ if __name__ == "__main__":
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
     print "clustering end"""
 
-    for measure in __available_measures:
-        clustering_test("../iris_training.arff",measure , 5, 1000 )
+    clustering_test(sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4])
+    #clustering_test("../test.arff", "euclidean" , 3, 5)
     #run_tests(lambda data, measure: khopca.cluster(data, 35, 3000, measure))
 
