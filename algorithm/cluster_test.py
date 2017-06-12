@@ -115,6 +115,6 @@ if __name__ == "__main__":
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
     print "clustering end"""
 
-    clustering_test(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
-    #clustering_test("../test.arff", "euclidean" , 3, 5)
+    #clustering_test(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
+    clustering_test("../test.arff", "euclidean" , 3, 5)
 
