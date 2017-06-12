@@ -3,10 +3,6 @@ import random
 from scipy.spatial import distance
 
 
-# TODO: add all distance measures
-# TODO: print labels per line
-# TODO: run by commandline
-# TODO: clean up messy code
 
 
 def cluster(data, knn, kmax, d, subsampling=False):
@@ -31,10 +27,10 @@ def cluster(data, knn, kmax, d, subsampling=False):
     originaldata = data
     indices_kept = None
 
-    print "Clustering with: " + str(data.shape[0]) + "points, " + str(knn) + "=kNN, " + str(kmax) + "=kmax"
+    #print "Clustering with: " + str(data.shape[0]) + "points, " + str(knn) + "=kNN, " + str(kmax) + "=kmax"
     if subsampling:
         data, indices_kept = create_subsample(data, subsamplesize)
-        print "using subsample of " + str(data.shape[0]) + " points for clustering"
+        #print "using subsample of " + str(data.shape[0]) + " points for clustering"
 
     if kmin >= kmax:
         print "Error: MIN must be smaller than MAX"
@@ -198,7 +194,6 @@ def get_knn_adjacency(data, k):
         for i in neighbor_points:    # construct adjacent matrix
             adjacent[row][i] = True
             adjacent[i][row] = True
-
     return adjacent
 
 
@@ -238,26 +233,25 @@ def apply_rules_to_data(adjmatrix, data_array, kmin, kmax):
             if cur_max > data_array[i]:      # rule 1
                 data_array[i] = cur_max - 1
 
-            if cur_max == kmin & data_array[i] == kmin:      # rule 2
+            if cur_max == kmin and data_array[i] == kmin:      # rule 2
                 data_array[i] = kmax
 
-            if cur_max <= data_array[i] & data_array[i] != kmax:      # rule 3
+            if cur_max <= data_array[i] and data_array[i] != kmax:      # rule 3
                 data_array[i] -= 1
 
-            if cur_max == kmax & data_array[i] == kmax:      # rule 4
-                # apply criterion to select a node from set (max(W(N(n)),w_n)? random? more edges?
+            if cur_max == kmax and data_array[i] == kmax:      # rule 4
+                # apply criterion to select a node from set (max(W(N(n)),w_n)
                 data_array[i] -= 1
 
             if data_array[i] != cur_node_old:
                 something_changed = True
-
     return data_array
 
 
 def get_data_labels(adjmatrix, data_array, kmax):
     cluster_labels = numpy.zeros((data_array.shape[0],), dtype=numpy.int)
     clustercenters = [i for i, elem in enumerate(data_array) if elem == kmax]
-    print "found " + str(len(clustercenters)) + " cluster center"
+    #print "found " + str(len(clustercenters)) + " cluster center"
     clusterid = 1
     for i in clustercenters:
         cluster_labels[i] = clusterid

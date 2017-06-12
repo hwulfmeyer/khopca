@@ -4,36 +4,43 @@ from scipy.io import arff
 import khopca
 from os import listdir
 from os.path import isfile, join
+import sys
 
 
-__available_measures = ['euclidean']
 
-"""__available_measures = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine', 
+__available_measures = ['braycurtis', 'canberra', 'chebyshev', 'cityblock', 'correlation', 'cosine',
                         'euclidean', 'hamming', 'jaccard', 'matching',
                         'seuclidean', 'sqeuclidean',
-                        'yule']"""
+                        'yule']
 
 def clustering_test(datapath, dstmeasure, knn, kmax):
     data,_ = load_data(datapath)
-    print khopca.cluster(data, knn, kmax, dstmeasure)
-
+    labels = khopca.cluster(data, knn, kmax, dstmeasure)
+    for i in range(0,len(labels),1):
+        print labels[i]
 
 def load_data(path):
-    """ Loads a data set from path. Data set must be arff format.
-
-    Args:
-        path: path to the data set
-# TODO: test with all datasets
-    Returns:
-        a numpy-matrix. each column represents an attribute
-        each row a data item
     """
+       Load a data set in arff formatfrom path.
+
+       :param path: to the data set
+       :return: a numpy-matrix. column = attribute;  row a data point
+       """
     data, meta = arff.loadarff(open(path, 'r'))
     if data.shape == (0,):
         return numpy.empty((0, len(meta._attributes))), 0
     else:
-        data_transform = data[meta.names()[:-1]].copy().reshape(data.shape + (-1, ))
-        return data_transform.view(numpy.float), data.shape[0]
+        data_matrix = numpy.zeros(shape=(data.shape[0], len(data[0]) - 1))
+
+        for i in range(len(data)):
+            arff_row = data[i]
+
+            for j in range(len(arff_row) - 1):
+                data_matrix[i][j] = arff_row[j]
+
+    return data_matrix, data.shape[0]
+
+
 
 
 def test_all_datasets(cluster_function, measure):
@@ -97,17 +104,17 @@ def run_tests(cluster_function):
 
 if __name__ == "__main__":
 
-    print "clustering start"
+    """print "clustering start"
     start = time.time()
     clusterpath = "../iris_training.arff"
     #clusterpath = "../test.arff"
     #clusterpath = "../c_TRex.arff"
     #clusterpath = "../c_Aggregation.arff"
-    clustering_test(clusterpath, "euclidean", 12, 6000)
+    clustering_test(clusterpath, "euclidean", 35, 6000)
     m, s = divmod(time.time()-start, 60)
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
-    print "clustering end"
+    print "clustering end"""
 
-    #run_tests(lambda data, measure: khopca.cluster(data, 35, 3000, measure))
-    #test.test_all_measure(lambda data, measure: flame_cluster(data, 3, 0.1, measure, 17), "minkowski", process_count=8)
+    clustering_test(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
+    #clustering_test("../test.arff", "euclidean" , 3, 5)
 
