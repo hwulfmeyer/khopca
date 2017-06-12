@@ -9,7 +9,7 @@ from scipy.spatial import distance
 # TODO: clean up messy code
 
 
-def cluster(data, knn, kmax, d, subsampling=True):
+def cluster(data, knn, kmax, d, subsampling=False):
     """Clusters data with the khopca algorithm
 
     Args:
@@ -17,6 +17,7 @@ def cluster(data, knn, kmax, d, subsampling=True):
         knn: the k for k-neares-neighbors as integer
         kmax: maximum hops from the cluster center as integer
         d: distance metric as string
+        subsampling: boolean value if subsampling shall be used
 
     Returns:
         A one-dimensional array containing the labels for data
@@ -41,7 +42,7 @@ def cluster(data, knn, kmax, d, subsampling=True):
         print "Error: No Data to cluster"
     else:
         # 1. create adjacency matrix
-        data_adj = create_adjacent(data, knn)
+        data_adj = get_knn_adjacency(data, knn)
 
         # 2. create value array for data
         data_value_array = numpy.zeros((data.shape[0],), dtype=numpy.int)
@@ -62,6 +63,56 @@ def cluster(data, knn, kmax, d, subsampling=True):
 
         # 4. output clustering result
         return data_labels
+
+
+class BinaryNode:
+    def __init__(self, dim, median, points):
+        self.dimension = dim      # the dimension in which the median was searched in
+        self.median = median      # the value of the median
+        self.binpoints = points        # indices of the points contained in this node/bin
+        self.left = BinaryNode    # "contains" points before median: < median
+        self.right = BinaryNode   # "contains" points after median: >= median
+
+
+def build_kdtree(binpoints):
+    # return None if empty
+    pointsize = binpoints.shape[0]
+    if pointsize == 0:
+        return None
+
+    # find dimension with greatest variance
+    cur_greatest_dim = [0, 0]           # [value][dimension]
+    for i in range(0, binpoints.shape[1], 1):
+        dimvalues = binpoints[:, i]          # numpy array containing all values in column i
+        # calculate variance
+        curdim = numpy.var(dimvalues)
+        if curdim >= cur_greatest_dim[0]:
+            cur_greatest_dim[0] = curdim
+            cur_greatest_dim[1] = i
+
+    dimension = cur_greatest_dim[1]
+
+    # sort a fixed ie. ~30% number of randomly selected points,
+    # and use the median of those points to serve as the splitting plane.
+    """keep = int(dimvalues.shape[0] * 0.3)    # percentage of 30% are kept in the compact dimvalues
+    random.shuffle(dimvalues)
+    dimvalues_compact = dimvalues[:keep]"""
+
+    sorted_points = binpoints[binpoints[:, dimension].argsort()]    # sort points according to dimension
+    medianindex = int(pointsize/2)  # int rounding = floor() => int(1/2) = 0
+    median = binpoints[medianindex]
+
+    # create node of this function call
+    node = BinaryNode(dimension, median, binpoints)
+
+    # Create child nodes and construct subtree with remaining binpoints
+    node.left = build_kdtree(binpoints[:medianindex])       # everythin from 0 to medianindex (excluding medianindex)
+    node.right = build_kdtree(binpoints[medianindex + 1:])  # everythin medianindex to the end (exluding mdedianindex)
+    return BinaryNode
+
+
+def get_approxiamte_knn_adjacency(data, k):
+    pass
 
 
 def create_subsample(data, p):
@@ -114,7 +165,7 @@ def fit_subsample_on_data(data, originaldata, datalabels, indices):
     return fitted_datalabels
 
 
-def create_adjacent(data, k):
+def get_knn_adjacency(data, k):
     datapointcount = data.shape[0]   # number of datapoints
     # initialise datapointcount x datapointcount matrix with zeros
     adjacent = numpy.zeros([datapointcount, datapointcount], bool)

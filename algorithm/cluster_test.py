@@ -97,17 +97,17 @@ def run_tests(cluster_function):
 
 if __name__ == "__main__":
 
-    """print "clustering start"
+    print "clustering start"
     start = time.time()
     clusterpath = "../iris_training.arff"
     #clusterpath = "../test.arff"
     #clusterpath = "../c_TRex.arff"
     #clusterpath = "../c_Aggregation.arff"
-    clustering_test(clusterpath, "euclidean", 35, 6000)
+    clustering_test(clusterpath, "euclidean", 12, 6000)
     m, s = divmod(time.time()-start, 60)
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
-    print "clustering end"""
+    print "clustering end"
 
-    run_tests(lambda data, measure: khopca.cluster(data, 35, 3000, measure))
+    #run_tests(lambda data, measure: khopca.cluster(data, 35, 3000, measure))
     #test.test_all_measure(lambda data, measure: flame_cluster(data, 3, 0.1, measure, 17), "minkowski", process_count=8)
 
