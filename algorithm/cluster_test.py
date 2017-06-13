@@ -110,4 +110,4 @@ if __name__ == "__main__":
     print "clustering end"""
 
     #clustering_test(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
-    clustering_test("../iris_training.arff", "euclidean" , 3, 5)
+    clustering_test("../test.arff", "euclidean" , 1, 5)

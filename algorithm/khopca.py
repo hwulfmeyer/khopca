@@ -3,7 +3,7 @@ import random
 from scipy.spatial import distance
 
 
-def cluster(data, knn, kmax, dstmeasure, subsampling=True):
+def cluster(data, knn, kmax, dstmeasure, subsampling=False):
     """Clusters data with the khopca algorithm
 
     Args:
@@ -38,7 +38,7 @@ def cluster(data, knn, kmax, dstmeasure, subsampling=True):
         # 1. create adjacency matrix
         #data_adj = create_adjacent(data, knn, dstmeasure)
         data_adj = get_approxiamte_knn_adjacency(data, knn)
-
+        print data_adj
         # 2. create value array for data
         data_value_array = numpy.zeros((data.shape[0],), dtype=numpy.int)
 
@@ -61,55 +61,55 @@ def cluster(data, knn, kmax, dstmeasure, subsampling=True):
 
 
 class BinaryNode:
-    def __init__(self, dim, index, median, points, parent, side):
+    def __init__(self, dim, median, points, parent, side):
         self.dimension = dim      # the dimension for which the median is for
-        self.indexInData = index
         self.median = median      # the point containing the median for this node
-        self.binpoints = points   # points contained in this node/bin
+        self.binpoints = points   # points contained in this node/bin with indices as last column
         self.parent = parent      # parentnode
-        self.side = side        # side of this node left = True, right = False
-        self.left = None    # "contains" points before median: < median
-        self.right = None   # "contains" points after median: >= median
+        self.side = side          # side of this node left = True, right = False
+        self.left = None          # "contains" points before median: < median
+        self.right = None         # "contains" points after median: >= median
 
     @staticmethod
-    def build_kdtree(points_in_bin, index_array, parent, side):
+    def build_kdtree(data):
+        data_size = data.shape[0]  # number of datapoints
+        index_array = numpy.zeros(shape=(data_size,1), dtype=numpy.int)
+        for i in range(0, data_size, 1):
+            index_array[i][0] = i
+
+        # append indexarray to datapoints
+        binpoints = numpy.append(data, index_array, axis=1)
+        return BinaryNode.__kdtree(binpoints, None, "")
+
+    @staticmethod
+    def __kdtree(points_in_bin, parent, side):
         # return None if empty
         if len(points_in_bin) == 0:
             return None
         else:
             # find dimension with greatest variance
             cur_greatest_dim = [0, 0]           # [value][dimension]
-            for k in range(0, points_in_bin.shape[1], 1):
+            for k in range(0, points_in_bin.shape[1]-1, 1):
                 dimvalues = points_in_bin[:, k]          # numpy array containing all values in column/dimension i
                 # calculate variance & compare with current greatest
                 curdim = numpy.var(dimvalues)
                 if curdim >= cur_greatest_dim[0]:
                     cur_greatest_dim[0] = curdim
                     cur_greatest_dim[1] = k
-
             dimension = cur_greatest_dim[1]
 
             # find median
             sorted_points = points_in_bin[points_in_bin[:, dimension].argsort()]    # sort points according to dimension
-            medianindex = int(points_in_bin.shape[0] / 2)  # int rounding = floor() => int(1/2) = 0
-            median = numpy.copy(points_in_bin[medianindex])
-            index_in_data = numpy.copy(index_array[medianindex])
+            medianindex = int(sorted_points.shape[0] / 2)  # int rounding = floor() => int(1/2) = 0
+            median = numpy.copy(sorted_points[medianindex])
 
             # create node for this iteration
-            node = BinaryNode(dimension, index_in_data, median, points_in_bin, parent, "left")
+            node = BinaryNode(dimension, median, sorted_points, parent, side)
             # Create child nodes and construct subtree with remaining binpoints
             # everythin from 0 to medianindex (excluding medianindex)
-            node.left = BinaryNode.build_kdtree(
-                points_in_bin[:medianindex],
-                index_array[:medianindex],
-                node,
-                "left")
+            node.left = BinaryNode.__kdtree(sorted_points[:medianindex], node, "left")
             # everythin medianindex to the end (exluding mdedianindex)
-            node.right = BinaryNode.build_kdtree(
-                points_in_bin[medianindex + 1:],
-                index_array[medianindex + 1:],
-                node,
-                "right")
+            node.right = BinaryNode.__kdtree(sorted_points[medianindex + 1:], node, "right")
             return node
 
     @staticmethod
@@ -119,50 +119,63 @@ class BinaryNode:
             if node.right is not None:
                 return node.find_bin(node.right, q)
             else:
-                return node
+                if node.left is not None:
+                    return node.find_bin(node.left, q)
+                else:
+                    return node
 
         else:  # go left
             if node.left is not None:
                 return node.find_bin(node.left, q)
             else:
-                return node
+                if node.right is not None:
+                    return node.find_bin(node.right, q)
+                else:
+                    return node
 
 
 def get_approxiamte_knn_adjacency(data, k):
-    data_size = data.shape[0]   # number of datapoints
+    data_size = data.shape[0]  # number of datapoints
     adjacent = numpy.zeros([data_size, data_size], bool)
-    index_array = numpy.zeros((data.shape[0],), dtype=numpy.int)
-    for i in range(0,data.shape[0],1):
-        index_array[i] = i
-    data_kdtree = BinaryNode.build_kdtree(data, index_array, None, "")
+
+    data_kdtree = BinaryNode.build_kdtree(data)
+
+    """
+    listnodes = [(data_kdtree, 0)]
+    while len(listnodes) > 0:
+        bla_node = listnodes[-1]
+        del listnodes[-1]
+        print str(bla_node[1]) + " --- " + str(bla_node[0].median) + " ___ " + str(bla_node[0].dimension)
+        if bla_node[0].right is not None:
+            listnodes.append((bla_node[0].right, bla_node[1] + 1))
+        if bla_node[0].left is not None:
+            listnodes.append((bla_node[0].left, bla_node[1] + 1))"""
 
     # iterate over all points and find the kNN in the kdtree
     for k in range(0, data_size, 1):
+        cur_datap = data[k]
         neighbor_points = []
         neighbor_dst = []
 
-        binofk = BinaryNode.find_bin(data_kdtree, data[k])
+        binofk = BinaryNode.find_bin(data_kdtree, cur_datap)
         # if knn = same point
-        if (data[k]-binofk.median).all():
+        if k == binofk.median[-1]:
             binofk = binofk.parent
 
-        neighbor_points.append(binofk.indexInData)
-        neighbor_dst.append(distance.euclidean(data[k], binofk.median))
+        neighbor_points.append(binofk.median[-1])   # append index of median in data
+        neighbor_dst.append(distance.euclidean(cur_datap, binofk.median[:-1]))  # append distance of median
 
-        found_knn = False
-        side_to_add = None
         cur_node = binofk
-        next_parent = None
-        while not found_knn:
+        while True:
             next_parent = cur_node.parent
 
-            # look if parent is smaller
+            # look into parent if in knn
             if next_parent is not None:
                 maxndst = max(neighbor_dst)
-                dst = distance.euclidean(data[k], next_parent.median)
+                dst = distance.euclidean(data[k], next_parent.median[:-1])
 
                 if len(neighbor_points) < k:  # for the first k points they are our current neighbors
-                    neighbor_points.append(next_parent.indexInData)
+                    neighbor_points.append(next_parent.median[-1])
                     neighbor_dst.append(dst)
                 elif maxndst > dst:
                     # if found remove max-distance value and save new distance
@@ -171,30 +184,31 @@ def get_approxiamte_knn_adjacency(data, k):
                     neighbor_dst.append(dst)
 
                     del neighbor_points[index]  # save also the datapoint
-                    neighbor_points.append(next_parent.indexInData)
+                    neighbor_points.append(next_parent.median[-1])
                 elif maxndst <= dst:
-                    found_knn = True
+                    break
             else:
-                found_knn = True
+                break
 
-            # traverse left/right node of parent of current one
+            # get side to traverse in parent node
+            side_to_add = "Left"
             if cur_node.side == "Left":
                 side_to_add = "Right"
-            else:
-                side_to_add = "Left"
+
+            # traverse child nodes
             nodes = []
             if next_parent.right is not None and side_to_add == "Right":
                 nodes.append(next_parent.right)
-            if next_parent.left is not None and side_to_add == "Left":
+            elif next_parent.left is not None and side_to_add == "Left":
                 nodes.append(next_parent.left)
             while len(nodes) > 0:
                 cur_while_node = nodes[-1]
                 del nodes[-1]
                 maxndst = max(neighbor_dst)
-                dst = distance.euclidean(data[k], cur_while_node.median)
+                dst = distance.euclidean(cur_datap, cur_while_node.median[:-1])
 
                 if len(neighbor_points) < k:  # for the first k points they are our current neighbors
-                    neighbor_points.append(cur_while_node.indexInData)
+                    neighbor_points.append(cur_while_node.median[-1])
                     neighbor_dst.append(dst)
                 elif maxndst > dst:
                     # if found remove max-distance value and save new distance
@@ -203,19 +217,18 @@ def get_approxiamte_knn_adjacency(data, k):
                     neighbor_dst.append(dst)
 
                     del neighbor_points[index]  # save also the datapoint
-                    neighbor_points.append(cur_while_node.indexInData)
+                    neighbor_points.append(cur_while_node.median[-1])
 
-                #iterate over their childs
+                # iterate over their childs
                 if cur_while_node.right is not None:
                     nodes.append(cur_while_node.right)
                 if cur_while_node.left is not None:
                     nodes.append(cur_while_node.left)
             cur_node = next_parent
 
-        print neighbor_points
         for i in neighbor_points:    # construct adjacent matrix
-            adjacent[k][i] = True
-            adjacent[i][k] = True
+            adjacent[k][int(i)] = True
+            adjacent[int(i)][k] = True
     return adjacent
 
 
