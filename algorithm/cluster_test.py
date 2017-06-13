@@ -28,19 +28,13 @@ def load_data(path):
        :param path: to the data set
        :return: a numpy-matrix. column = attribute;  row a data point
        """
+
     data, meta = arff.loadarff(open(path, 'r'))
     if data.shape == (0,):
         return numpy.empty((0, len(meta._attributes))), 0
     else:
-        data_matrix = numpy.zeros(shape=(data.shape[0], len(data[0]) - 1))
-
-        for i in range(len(data)):
-            arff_row = data[i]
-
-            for j in range(len(arff_row) - 1):
-                data_matrix[i][j] = arff_row[j]
-
-    return data_matrix, data.shape[0]
+        data_transform = data[meta.names()[:-1]].copy().reshape(data.shape + (-1, ))
+        return data_transform.view(numpy.float), data.shape[0]
 
 
 def test_all_datasets(cluster_function, measure):
@@ -117,4 +111,3 @@ if __name__ == "__main__":
 
     #clustering_test(sys.argv[1], sys.argv[2], int(sys.argv[3]), int(sys.argv[4]))
     clustering_test("../iris_training.arff", "euclidean" , 3, 5)
-
