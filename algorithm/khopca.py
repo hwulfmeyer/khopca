@@ -358,8 +358,9 @@ if __name__ == "__main__":
     '''
     newdata = load_data(str(sys.argv[1]))
     datalabels = cluster(newdata, int(sys.argv[2]), int(sys.argv[3]))
-    for i in range(0, len(datalabels), 1):
-        print datalabels[i]'''
+    if datalabels not None:
+        for i in range(0, len(datalabels), 1):
+            print datalabels[i]'''
 
 
     start = time.time()
