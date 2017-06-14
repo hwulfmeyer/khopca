@@ -3,6 +3,8 @@ import numpy
 import sys
 from scipy.spatial import distance
 from scipy.io import arff
+from os import listdir
+from os.path import isfile, join
 
 
 def cluster(data, knn, kmax):
@@ -313,26 +315,60 @@ def load_data(path):
     """
     data, meta = arff.loadarff(open(path, 'r'))
     if data.shape == (0,):
-        return numpy.empty((0, len(meta._attributes))), 0
+        return numpy.empty((0, len(meta._attributes)))
     else:
         data_transform = data[meta.names()[:-1]].copy().reshape(data.shape + (-1,))
         return data_transform.view(numpy.float)
 
 
+
+def test_all_datasets(cluster_function):
+    """
+    Test cluster_function for all available data sets. The distance_measure parameter will always be measure.
+
+    :param cluster_function: the clustering function. Signature is clustering(data: ndarray, distance_measure: str)
+    :param measure: the distance measure to be used; as seen in scipys pdist
+    :param process_count: process count
+
+    :return: nothing
+    """
+    data_set_paths = [f for f in listdir("datasets") if isfile(join("datasets", f))]
+
+    # function for verbosely testing the clustering function
+    def cluster_with_catching(path):
+        try:
+            data = load_data("datasets/" + path)
+            if data.shape[0] > 0:
+                print str(path)
+                start = time.time()
+                cluster_function(data)
+                m, s = divmod(time.time() - start, 60)
+                print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
+            else:
+                print(str(path) + "is empty")
+        except Exception as e:
+            print(str(path) + " threw an EXCEPTION: " + str(type(e)) + ": " + str(e))
+
+    for data_set_path in data_set_paths:
+        cluster_with_catching(data_set_path)
+
+
 if __name__ == "__main__":
     # konsolenprogramm
-
+    '''
     newdata = load_data(str(sys.argv[1]))
     datalabels = cluster(newdata, int(sys.argv[2]), int(sys.argv[3]))
     for i in range(0, len(datalabels), 1):
-        print datalabels[i]
+        print datalabels[i]'''
 
-    '''
+
     start = time.time()
-    newdata = load_data("../iris_training.arff")
-    datalabels = cluster(newdata, 100, 5000)
+    newdata = load_data("datasets/cf_TRex_test.arff")
+    datalabels = cluster(newdata, 300, 9000)
     for i in range(0, len(datalabels), 1):
-        print datalabels[i]
+        pass
+        #print datalabels[i]
     m, s = divmod(time.time()-start, 60)
     print "Time:  " + str(int(m)) + "min " + str(int(s)) + "sec"
-    '''
+
+    #test_all_datasets(lambda data: cluster(data, 300, 9000))
