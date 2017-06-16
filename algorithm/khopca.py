@@ -131,12 +131,13 @@ def get_approxiamte_knn_adjacency(data, knn):
         neighbor_dst = []
 
         binofk = BinaryNode.find_bin(data_kdtree, cur_datap)
-        # if nearest point = input point
+        # if nearest point = input point dont append into neighbors and instead append parent
         if k == binofk.median[-1]:
-            binofk = binofk.parent
-
-        neighbor_points.append(binofk.median[-1])   # append index of median in data
-        neighbor_dst.append(distance.euclidean(cur_datap, binofk.median[:-1]))  # append distance of median
+            neighbor_points.append(binofk.parent.median[-1])   # append index of median in data
+            neighbor_dst.append(distance.euclidean(cur_datap, binofk.parent.median[:-1]))  # append distance of median
+        else:
+            neighbor_points.append(binofk.median[-1])   # append index of median in data
+            neighbor_dst.append(distance.euclidean(cur_datap, binofk.median[:-1]))  # append distance of median
 
         # look for our knn in the rest of the kdtree with a backtracing search towards the root
         cur_node = binofk
