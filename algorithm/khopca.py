@@ -23,8 +23,10 @@ def cluster(data, knn, kmax):
     kmin = 0
     if kmin >= kmax:
         print "Error: MIN must be smaller than MAX"
+        return None
     elif data.shape[0] == 0:
         print "Error: No Data to cluster"
+        return None
     else:
         # 1. create adjacency matrix using best bin first
         data_adj = get_approxiamte_knn_adjacency(data, knn)
